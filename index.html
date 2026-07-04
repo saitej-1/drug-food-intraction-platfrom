@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Synapse Prediction — AI Drug-Food Interaction</title>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #FAFBFC;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #94A3B8;
+      --brand-color: #3B82F6;
+      --accent-glow: rgba(59, 130, 246, 0.15);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      overflow-x: hidden;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Fixed Background Canvas */
+    #canvas-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Top Navigation */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      background: linear-gradient(to bottom, rgba(250, 251, 252, 0.8), rgba(250, 251, 252, 0));
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.03em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--brand-color);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--brand-color);
+    }
+
+    nav {
+      display: flex;
+      gap: 32px;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    nav a:hover {
+      color: var(--text-primary);
+    }
+
+    .cta-btn {
+      padding: 10px 20px;
+      background-color: var(--text-primary);
+      color: white;
+      border-radius: 40px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .cta-btn:hover {
+      background-color: var(--brand-color);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Scroll Sections */
+    section {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      padding: 0 10%;
+    }
+
+    .content-wrapper {
+      max-width: 480px;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    /* Section Alignments */
+    section.left {
+      justify-content: flex-start;
+    }
+
+    section.right {
+      justify-content: flex-end;
+    }
+
+    .section-tag {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--brand-color);
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+
+    h1, h2 {
+      font-size: 44px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 18px;
+    }
+
+    .description {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .learn-more {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: gap 0.3s ease;
+    }
+
+    .learn-more:hover {
+      gap: 10px;
+      color: var(--brand-color);
+    }
+
+    /* Scroll Indicator */
+    .scroll-indicator {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      opacity: 0.8;
+      transition: opacity 0.5s ease;
+    }
+
+    .scroll-text {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-secondary);
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 30px;
+      background: linear-gradient(to bottom, var(--text-secondary), transparent);
+      animation: pulseLine 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseLine {
+      0%, 100% { height: 30px; transform: scaleY(1); }
+      50% { height: 45px; transform: scaleY(1.2); }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      section {
+        padding: 0 24px;
+        justify-content: center !important;
+        text-align: center;
+      }
+      .content-wrapper {
+        background: rgba(250, 251, 252, 0.85);
+        padding: 32px;
+        border-radius: 20px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        border: 1px solid rgba(255,255,255,0.5);
+      }
+      h1, h2 {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background 3D Canvas -->
+  <div id="canvas-container"></div>
+
+  <!-- Header Nav -->
+  <header>
+    <div class="logo">
+      <div class="logo-dot"></div>
+      SYNAPSE AI
+    </div>
+    <nav>
+      <a href="#predict">Profiler</a>
+      <a href="#analysis">Analysis</a>
+      <a href="#interactions">Interactions</a>
+    </nav>
+    <a href="#get-started" class="cta-btn">Enter App</a>
+  </header>
+
+  <!-- Sections -->
+  <!-- Section 1 (Left) -->
+  <section class="left" id="predict">
+    <div class="content-wrapper" id="content-1">
+      <span class="section-tag">01 Prediction Core</span>
+      <h1>AI Food & Drug Prediction</h1>
+      <p class="description">A minimalist interface predicting metabolic interactions and clinical overlaps instantly with deep neural engines.</p>
+      <a href="#" class="learn-more">Launch Profiler Tool &rarr;</a>
+    </div>
+  </section>
+
+  <!-- Section 2 (Right) -->
+  <section class="right" id="analysis">
+    <div class="content-wrapper" id="content-2">
+      <span class="section-tag">02 Nutrient Core</span>
+      <h2>Nutrient Analysis</h2>
+      <p class="description">Analyzing chemical compounds and molecular features instantly, mapping binding factors before clinical delivery.</p>
+      <a href="#" class="learn-more">Explore Compounds &rarr;</a>
+    </div>
+  </section>
+
+  <!-- Section 3 (Left) -->
+  <section class="left" id="interactions">
+    <div class="content-wrapper" id="content-3">
+      <span class="section-tag">03 Safety Layer</span>
+      <h2>Drug Interactions</h2>
+      <p class="description">Mapping pharmaceutical overlaps safely. Identify cytochrome inhibitor blocks and prevent adverse side effects before they manifest.</p>
+      <a href="#" class="learn-more">Check Labeled Overlaps &rarr;</a>
+    </div>
+  </section>
+
+  <!-- Scroll Down Indicator -->
+  <div class="scroll-indicator" id="scroller-indicator">
+    <span class="scroll-text">Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+
+  <!-- JS Libraries via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+  <script>
+    // Initialize GSAP ScrollTrigger
+    gsap.registerPlugin(ScrollTrigger);
+
+    // --- THREE.JS SCENE SETUP ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    
+    // Camera
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.z = 8;
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    // --- LIGHTING ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+
+    // Main highlight light
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(5, 8, 5);
+    scene.add(dirLight);
+
+    // Subtle blue rim lighting (accent point light from back-left)
+    const blueRimLight = new THREE.PointLight(0x3B82F6, 4.5, 12);
+    blueRimLight.position.set(-3.5, 2, -2);
+    scene.add(blueRimLight);
+
+    // Subtle warm rim lighting (accent point light from right)
+    const warmRimLight = new THREE.PointLight(0xF43F5E, 2.5, 10);
+    warmRimLight.position.set(4, -2, -1);
+    scene.add(warmRimLight);
+
+    // --- CREATE 3D SMART CARD ---
+    const cardGroup = new THREE.Group();
+    scene.add(cardGroup);
+
+    // Card geometry: standard rounded card proportion (3.2 x 2.0 x 0.08)
+    const cardGeom = new THREE.BoxGeometry(3.2, 2.0, 0.08);
+    
+    // Frosted Glass / Soft Plastic material using Physical Material
+    const cardMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      roughness: 0.15,
+      metalness: 0.05,
+      transmission: 0.85,    // High frosted glass transmission
+      thickness: 1.0,         // Internal glass thickness
+      ior: 1.52,             // Index of refraction of glass
+      specularIntensity: 0.8,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.1,
+      transparent: true,
+      opacity: 0.95
+    });
+
+    const cardBase = new THREE.Mesh(cardGeom, cardMat);
+    cardGroup.add(cardBase);
+
+    // 1. Add metallic "chip" detail on front face
+    const chipGeom = new THREE.BoxGeometry(0.5, 0.4, 0.02);
+    const chipMat = new THREE.MeshStandardMaterial({
+      color: 0x94A3B8,
+      metalness: 0.9,
+      roughness: 0.2
+    });
+    const chip = new THREE.Mesh(chipGeom, chipMat);
+    chip.position.set(-0.9, 0.3, 0.05); // Top-left front face
+    cardGroup.add(chip);
+
+    // 2. Add glowing central brand symbol
+    const coreGeom = new THREE.SphereGeometry(0.2, 32, 32);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: 0x3B82F6,
+    });
+    const core = new THREE.Mesh(coreGeom, coreMat);
+    core.position.set(0, 0, 0.05);
+    cardGroup.add(core);
+
+    // Small orbiting ring around central brand symbol
+    const coreRingGeom = new THREE.RingGeometry(0.32, 0.35, 32);
+    const coreRingMat = new THREE.MeshBasicMaterial({
+      color: 0x3B82F6,
+      side: THREE.DoubleSide
+    });
+    const coreRing = new THREE.Mesh(coreRingGeom, coreRingMat);
+    coreRing.position.set(0, 0, 0.05);
+    cardGroup.add(coreRing);
+
+    // 3. Add neon grid line overlays on back
+    const linesGeom = new THREE.BoxGeometry(2.8, 0.02, 0.01);
+    const linesMat = new THREE.MeshBasicMaterial({
+      color: 0xE2E8F0,
+    });
+    
+    for (let index = 0; index < 3; index++) {
+      const lineMesh = new THREE.Mesh(linesGeom, linesMat);
+      lineMesh.position.set(0, -0.3 - (index * 0.15), 0.05);
+      cardGroup.add(lineMesh);
+    }
+
+    // Set initial card states
+    cardGroup.position.set(1.5, 0, 0); // Position slightly to the right
+    cardGroup.rotation.set(0.3, -0.4, 0.1);
+
+    // --- ANIMATION CONFIGURATION ---
+    // Target parameters for GSAP to scroll-animate
+    const cardTarget = {
+      x: 1.5,
+      y: 0,
+      z: 0,
+      rx: 0.3,
+      ry: -0.4,
+      rz: 0.1
+    };
+
+    // --- GSAP SCROLLTRIGGER INTERACTION ---
+    
+    // Page load intro animation
+    window.addEventListener('load', () => {
+      gsap.to('#content-1', { opacity: 1, y: 0, duration: 1.2, ease: 'power4.out', delay: 0.2 });
+    });
+
+    // Content sections reveal transitions
+    gsap.utils.toArray('.content-wrapper').forEach((content, idx) => {
+      if (idx === 0) return; // handled by intro
+      gsap.to(content, {
+        scrollTrigger: {
+          trigger: content.parentElement,
+          start: 'top 60%',
+          end: 'top 30%',
+          toggleActions: 'play none none reverse',
+        },
+        opacity: 1,
+        y: 0,
+        duration: 1.0,
+        ease: 'power3.out'
+      });
+    });
+
+    // Hide scroll indicator on scroll down
+    gsap.to('#scroller-indicator', {
+      scrollTrigger: {
+        trigger: '#predict',
+        start: 'top top',
+        end: 'bottom 80%',
+        scrub: true
+      },
+      opacity: 0
+    });
+
+    // Scroll scrubbing animation for the 3D card
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: 'body',
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: 1.5, // Smooth lag scrub
+      }
+    })
+    // Transition from Section 1 (centered/right) to Section 2 (left + flip)
+    .to(cardTarget, {
+      x: -1.6,
+      y: 0.3,
+      rx: -0.4,
+      ry: 2.8,  // Rotates to show the back of the card
+      rz: -0.2,
+      duration: 1
+    })
+    // Transition from Section 2 to Section 3 (right + dynamic angle)
+    .to(cardTarget, {
+      x: 1.6,
+      y: -0.4,
+      rx: 0.5,
+      ry: 6.0,  // Full spin around
+      rz: 0.3,
+      duration: 1
+    });
+
+    // --- RENDER LOOP WITH IDLE FLOAT ---
+    let clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const elapsedTime = clock.getElapsedTime();
+
+      // Gentle floating yoyo motion on Y-axis
+      const floatOffset = Math.sin(elapsedTime * 1.5) * 0.15;
+      
+      // Idle rotation drift
+      const driftX = Math.sin(elapsedTime * 0.8) * 0.05;
+      const driftY = Math.cos(elapsedTime * 0.6) * 0.05;
+
+      // Apply target values blended with the floating motion
+      cardGroup.position.x = cardTarget.x;
+      cardGroup.position.y = cardTarget.y + floatOffset;
+      cardGroup.position.z = cardTarget.z;
+
+      cardGroup.rotation.x = cardTarget.rx + driftX;
+      cardGroup.rotation.y = cardTarget.ry + driftY;
+      cardGroup.rotation.z = cardTarget.rz;
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // --- RESIZE HANDLER ---
+    window.addEventListener('resize', () => {
+      // Update camera aspect and projection
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      // Update renderer sizes
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      // Responsive positioning tweaks
+      if (window.innerWidth < 768) {
+        cardTarget.x = 0;
+      }
+    });
+    
+    // Trigger once on initialization to check initial screensize
+    if (window.innerWidth < 768) {
+      cardTarget.x = 0;
+    }
+  </script>
+</body>
+</html>
