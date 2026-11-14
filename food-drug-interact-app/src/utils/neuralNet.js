@@ -1,6 +1,6 @@
 // Simple feedforward neural network in pure JS with backpropagation
-// Input: 15 nodes (7 food features, 8 drug features)
-// Hidden: 8 nodes
+// Input: 60 nodes (30 food features, 30 drug features)
+// Hidden: 10 nodes
 // Output: 3 nodes (Safe, Moderate warning, Severe danger)
 
 import { FOODS, DRUGS, PAIRED_INTERACTIONS, FOOD_FEATURES, DRUG_FEATURES } from '../data/interactions';
